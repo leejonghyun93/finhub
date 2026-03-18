@@ -98,6 +98,7 @@ public class BankingServiceImpl implements BankingService {
                 .build());
 
         kafkaTemplate.send(TRANSFER_TOPIC, new TransferCompletedEvent(
+                userId,
                 fromAccount.getId(),
                 fromAccount.getAccountNumber(),
                 toAccount.getId(),

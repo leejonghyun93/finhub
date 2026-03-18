@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record TransferCompletedEvent(
+        Long userId,
         Long fromAccountId,
         String fromAccountNumber,
         Long toAccountId,
