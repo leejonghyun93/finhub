@@ -6,6 +6,7 @@ import com.finhub.banking.domain.Transaction;
 import com.finhub.banking.domain.TransactionType;
 import com.finhub.banking.dto.event.TransferCompletedEvent;
 import com.finhub.banking.dto.request.CreateAccountRequest;
+import com.finhub.banking.dto.request.DepositRequest;
 import com.finhub.banking.dto.request.TransferRequest;
 import com.finhub.banking.dto.response.AccountResponse;
 import com.finhub.banking.dto.response.TransactionResponse;
@@ -63,6 +64,24 @@ public class BankingServiceImpl implements BankingService {
     public AccountResponse getAccountDetail(Long userId, Long accountId) {
         Account account = accountRepository.findByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return AccountResponse.from(account);
+    }
+
+    @Override
+    public AccountResponse deposit(Long userId, Long accountId, DepositRequest request) {
+        Account account = accountRepository.findByIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        account.deposit(request.amount());
+
+        transactionRepository.save(Transaction.builder()
+                .account(account)
+                .transactionType(TransactionType.DEPOSIT)
+                .amount(request.amount())
+                .balanceAfter(account.getBalance())
+                .description("충전")
+                .build());
+
         return AccountResponse.from(account);
     }
 

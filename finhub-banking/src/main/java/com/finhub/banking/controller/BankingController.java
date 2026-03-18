@@ -1,6 +1,7 @@
 package com.finhub.banking.controller;
 
 import com.finhub.banking.dto.request.CreateAccountRequest;
+import com.finhub.banking.dto.request.DepositRequest;
 import com.finhub.banking.dto.request.TransferRequest;
 import com.finhub.banking.dto.response.AccountResponse;
 import com.finhub.banking.dto.response.ApiResponse;
@@ -49,6 +50,15 @@ public class BankingController {
             @PathVariable Long accountId) {
         AccountResponse response = bankingService.getAccountDetail(userDetails.getUserId(), accountId);
         return ResponseEntity.ok(ApiResponse.success(response, "계좌 상세 조회 성공"));
+    }
+
+    @PostMapping("/{accountId}/deposit")
+    public ResponseEntity<ApiResponse<AccountResponse>> deposit(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long accountId,
+            @Valid @RequestBody DepositRequest request) {
+        AccountResponse response = bankingService.deposit(userDetails.getUserId(), accountId, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "충전 성공"));
     }
 
     @PostMapping("/transfer")
