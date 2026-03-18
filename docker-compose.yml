@@ -7,7 +7,7 @@ services:
   # ============================================================
 
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: finhub-postgres
     restart: unless-stopped
     environment:
@@ -371,6 +371,37 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    networks:
+      - finhub-net
+
+  finhub-ai:
+    build:
+      context: ./finhub-ai
+      dockerfile: Dockerfile
+    container_name: finhub-ai
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/finhub_ai
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+      JWT_SECRET: ${JWT_SECRET:-finhub-secret-key-must-be-at-least-256-bits-long-for-hs256}
+      EUREKA_SERVER_URL: http://finhub-eureka:8761/eureka
+    depends_on:
+      postgres:
+        condition: service_healthy
+      finhub-eureka:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8087/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - finhub-net
 
