@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: finhub-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://finhub-user
+          predicates:
+            - Path=/api/v1/users/**
+
+        - id: banking-service
+          uri: lb://finhub-banking
+          predicates:
+            - Path=/api/v1/banking/**
+
+        - id: investment-service
+          uri: lb://finhub-investment
+          predicates:
+            - Path=/api/v1/investment/**
+
+        - id: payment-service
+          uri: lb://finhub-payment
+          predicates:
+            - Path=/api/v1/payment/**
+
+        - id: insurance-service
+          uri: lb://finhub-insurance
+          predicates:
+            - Path=/api/v1/insurance/**
+
+        - id: search-service
+          uri: lb://finhub-search
+          predicates:
+            - Path=/api/v1/search/**
+
+        - id: notification-service
+          uri: lb://finhub-notification
+          predicates:
+            - Path=/api/v1/notification/**
+
+        - id: ai-service
+          uri: lb://finhub-ai
+          predicates:
+            - Path=/api/v1/ai/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
