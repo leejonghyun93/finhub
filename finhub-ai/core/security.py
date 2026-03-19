@@ -37,7 +37,7 @@ def get_current_user(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="유효하지 않은 토큰입니다.",
                 )
-            return {"user_id": user_id, "email": payload.get("sub"), "payload": payload}
+            return {"user_id": user_id, "email": payload.get("sub"), "payload": payload, "token": token}
         except JWTError as e:
             print(f"[JWT] 실패: {str(e)}")
             continue

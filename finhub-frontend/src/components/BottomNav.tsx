@@ -51,6 +51,17 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    path: '/ai',
+    label: 'AI',
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? '#00B37E' : 'none'} stroke={active ? '#00B37E' : '#9CA3AF'} strokeWidth="1.8">
+        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
+        <circle cx="9" cy="15" r="1.5" fill={active ? '#fff' : '#9CA3AF'} stroke="none" />
+        <circle cx="15" cy="15" r="1.5" fill={active ? '#fff' : '#9CA3AF'} stroke="none" />
+      </svg>
+    ),
+  },
 ]
 
 export default function BottomNav() {

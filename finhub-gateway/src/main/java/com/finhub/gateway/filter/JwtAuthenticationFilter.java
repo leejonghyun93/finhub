@@ -51,15 +51,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        Long userId = jwtTokenProvider.getUserId(token);
-        String email = jwtTokenProvider.getEmail(token);
+        log.debug("JWT 인증 성공 - userId: {}, path: {}", jwtTokenProvider.getUserId(token), path);
 
-        MutableHttpServletRequest mutableRequest = new MutableHttpServletRequest(request);
-        mutableRequest.putHeader("X-User-Id", String.valueOf(userId));
-        mutableRequest.putHeader("X-User-Email", email);
-
-        log.debug("JWT 인증 성공 - userId: {}, path: {}", userId, path);
-        filterChain.doFilter(mutableRequest, response);
+        // request를 래핑하지 않고 원본 그대로 전달
+        // → body InputStream이 gateway-mvc에 손상 없이 전달됨
+        filterChain.doFilter(request, response);
     }
 
     private boolean isPublicPath(String path) {

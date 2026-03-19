@@ -10,6 +10,7 @@ import PaymentPage from './pages/PaymentPage'
 import InsurancePage from './pages/InsurancePage'
 import SearchPage from './pages/SearchPage'
 import NotificationPage from './pages/NotificationPage'
+import AiPage from './pages/AiPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
             <Route path="/insurance" element={<InsurancePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/notification" element={<NotificationPage />} />
+            <Route path="/ai" element={<AiPage />} />
           </Route>
         </Route>
       </Routes>

@@ -3,7 +3,9 @@
     "allow": [
       "Bash(find /d/finhub -name \"*.sql\" -o -name \"V*.sql\" 2>/dev/null | head -20)",
       "Bash(find /d/finhub -type f \\\\\\( -name \"*.java\" -o -name \"*.yml\" -o -name \"*.yaml\" -o -name \"*.sql\" -o -name \"*.md\" \\\\\\) 2>/dev/null | sort)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)"
     ]
   }
 }

@@ -43,10 +43,6 @@ spring:
             predicates:
               - Path=/api/v1/notification/**
 
-          - id: ai-service
-            uri: lb://finhub-ai
-            predicates:
-              - Path=/api/v1/ai/**
 
 eureka:
   client:
