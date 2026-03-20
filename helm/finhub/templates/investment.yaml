@@ -1,0 +1,59 @@
+{{- if .Values.investment.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-investment
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.investment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-investment
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-investment
+    spec:
+      initContainers:
+        - name: wait-deps
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z {{ .Release.Name }}-postgres {{ .Values.infrastructure.postgres.port }}; do echo "Waiting for PostgreSQL..."; sleep 3; done
+              until nc -z {{ .Release.Name }}-kafka {{ .Values.infrastructure.kafka.port }}; do echo "Waiting for Kafka..."; sleep 3; done
+              until nc -z {{ .Release.Name }}-eureka {{ .Values.eureka.port }}; do echo "Waiting for Eureka..."; sleep 3; done
+      containers:
+        - name: investment
+          image: "{{ .Values.investment.image }}:{{ .Values.global.imageTag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.investment.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-config
+            - secretRef:
+                name: {{ .Release.Name }}-secret
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Release.Name }}-postgres:{{ .Values.infrastructure.postgres.port }}/{{ .Values.investment.db }}"
+            - name: JAVA_OPTS
+              value: "-Xms256m -Xmx512m"
+          resources:
+            {{- toYaml .Values.investment.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-investment
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Release.Name }}-investment
+  ports:
+    - port: {{ .Values.investment.port }}
+      targetPort: {{ .Values.investment.port }}
+{{- end }}

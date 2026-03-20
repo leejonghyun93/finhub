@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+data:
+  # Database
+  SPRING_DATASOURCE_USERNAME: {{ .Values.postgres.username | quote }}
+  POSTGRES_USER: {{ .Values.postgres.username | quote }}
+
+  # Eureka
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://{{ .Release.Name }}-eureka:{{ .Values.eureka.port }}/eureka/"
+
+  # Kafka
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "{{ .Release.Name }}-kafka:{{ .Values.infrastructure.kafka.port }}"
+
+  # Redis
+  SPRING_DATA_REDIS_HOST: "{{ .Release.Name }}-redis"
+  SPRING_DATA_REDIS_PORT: {{ .Values.infrastructure.redis.port | quote }}
+
+  # Elasticsearch
+  SPRING_ELASTICSEARCH_URIS: "http://{{ .Release.Name }}-elasticsearch:{{ .Values.infrastructure.elasticsearch.port }}"

@@ -1,0 +1,49 @@
+{{- if .Values.infrastructure.zookeeper.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-zookeeper
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-zookeeper
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: {{ .Values.infrastructure.zookeeper.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.infrastructure.zookeeper.port }}
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: {{ .Values.infrastructure.zookeeper.port | quote }}
+            - name: ZOOKEEPER_TICK_TIME
+              value: "2000"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-zookeeper
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Release.Name }}-zookeeper
+  ports:
+    - port: {{ .Values.infrastructure.zookeeper.port }}
+      targetPort: {{ .Values.infrastructure.zookeeper.port }}
+{{- end }}

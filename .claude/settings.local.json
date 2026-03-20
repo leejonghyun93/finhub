@@ -5,7 +5,20 @@
       "Bash(find /d/finhub -type f \\\\\\( -name \"*.java\" -o -name \"*.yml\" -o -name \"*.yaml\" -o -name \"*.sql\" -o -name \"*.md\" \\\\\\) 2>/dev/null | sort)",
       "Bash(ls:*)",
       "Bash(docker compose:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(helm upgrade:*)",
+      "Bash(kubectl delete:*)",
+      "Bash(echo \"delete exit: $?\")",
+      "Bash(docker build:*)",
+      "Bash(minikube image:*)",
+      "Bash(kubectl rollout:*)",
+      "Bash(kubectl logs:*)",
+      "Bash(echo \"minikube rm exit: $?\")",
+      "Bash(docker rmi:*)",
+      "Bash(echo \"docker rmi exit: $?\")",
+      "Bash(kubectl get:*)",
+      "Bash(./mvnw dependency:tree -pl finhub-gateway)",
+      "Bash(kubectl describe:*)"
     ]
   }
 }

@@ -1,0 +1,42 @@
+{{- if .Values.eureka.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-eureka
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.eureka.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-eureka
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-eureka
+    spec:
+      containers:
+        - name: eureka
+          image: "{{ .Values.eureka.image }}:{{ .Values.global.imageTag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.eureka.port }}
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms512m -Xmx768m"
+          resources:
+            {{- toYaml .Values.eureka.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-eureka
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Release.Name }}-eureka
+  ports:
+    - port: {{ .Values.eureka.port }}
+      targetPort: {{ .Values.eureka.port }}
+{{- end }}

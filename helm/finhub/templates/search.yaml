@@ -1,0 +1,56 @@
+{{- if .Values.search.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-search
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.search.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-search
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-search
+    spec:
+      initContainers:
+        - name: wait-deps
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z {{ .Release.Name }}-elasticsearch {{ .Values.infrastructure.elasticsearch.port }}; do echo "Waiting for Elasticsearch..."; sleep 5; done
+              until nc -z {{ .Release.Name }}-eureka {{ .Values.eureka.port }}; do echo "Waiting for Eureka..."; sleep 3; done
+      containers:
+        - name: search
+          image: "{{ .Values.search.image }}:{{ .Values.global.imageTag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.search.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-config
+            - secretRef:
+                name: {{ .Release.Name }}-secret
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms256m -Xmx512m"
+          resources:
+            {{- toYaml .Values.search.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-search
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Release.Name }}-search
+  ports:
+    - port: {{ .Values.search.port }}
+      targetPort: {{ .Values.search.port }}
+{{- end }}
