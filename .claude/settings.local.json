@@ -18,7 +18,10 @@
       "Bash(echo \"docker rmi exit: $?\")",
       "Bash(kubectl get:*)",
       "Bash(./mvnw dependency:tree -pl finhub-gateway)",
-      "Bash(kubectl describe:*)"
+      "Bash(kubectl describe:*)",
+      "Bash(minikube status:*)",
+      "Bash(minikube start:*)",
+      "Bash(docker images:*)"
     ]
   }
 }

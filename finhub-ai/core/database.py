@@ -1,5 +1,6 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text
+from sqlalchemy import create_engine, Column, Integer, String, Text, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from pgvector.sqlalchemy import Vector
 from core.config import settings
 
 engine = create_engine(settings.DATABASE_URL)
@@ -17,6 +18,7 @@ class FinancialProduct(Base):
     name = Column(String(200), nullable=False)
     category = Column(String(50), nullable=False)  # STOCK, INSURANCE, SAVINGS, LOAN
     description = Column(Text, nullable=False)
+    embedding = Column(Vector(768), nullable=True)
 
 
 def get_db():
@@ -43,7 +45,45 @@ SEED_PRODUCTS = [
 ]
 
 
+def _generate_embeddings():
+    """Ollama nomic-embed-text로 상품 임베딩 생성 및 저장 (embedding IS NULL인 상품만)"""
+    from langchain_ollama import OllamaEmbeddings
+
+    embed_model = OllamaEmbeddings(
+        model=settings.OLLAMA_EMBED_MODEL,
+        base_url=settings.OLLAMA_BASE_URL,
+    )
+
+    db = SessionLocal()
+    try:
+        products = db.query(FinancialProduct).filter(FinancialProduct.embedding.is_(None)).all()
+        if not products:
+            print("모든 상품에 임베딩이 이미 존재합니다.")
+            return
+
+        print(f"임베딩 생성 시작: {len(products)}개 상품")
+        texts = [f"{p.name} {p.category} {p.description}" for p in products]
+        vectors = embed_model.embed_documents(texts)
+
+        for product, vector in zip(products, vectors):
+            product.embedding = vector
+
+        db.commit()
+        print(f"임베딩 생성 완료: {len(products)}개")
+    except Exception as e:
+        db.rollback()
+        print(f"[경고] 임베딩 생성 실패 (Ollama 연결 확인 필요): {e}")
+    finally:
+        db.close()
+
+
 def init_db():
+    # pgvector 확장 활성화 (테이블 생성 전에 반드시 실행)
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.commit()
+    print("pgvector 확장 활성화 완료")
+
     Base.metadata.create_all(bind=engine)
     print("테이블 생성 완료")
 
@@ -56,3 +96,6 @@ def init_db():
             print(f"금융 상품 시드 데이터 {len(SEED_PRODUCTS)}건 삽입 완료")
     finally:
         db.close()
+
+    # 임베딩 생성 (Ollama 미기동 시 경고만 출력하고 계속 진행)
+    _generate_embeddings()

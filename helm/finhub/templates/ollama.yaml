@@ -1,0 +1,86 @@
+{{- if .Values.infrastructure.ollama.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-ollama-pvc
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.infrastructure.ollama.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ollama
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-ollama
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-ollama
+    spec:
+      initContainers:
+        - name: pull-models
+          image: {{ .Values.infrastructure.ollama.image }}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              ollama serve &
+              OLLAMA_PID=$!
+              echo "Ollama 서버 시작 대기..."
+              sleep 10
+              {{- range .Values.infrastructure.ollama.models }}
+              echo "모델 풀링: {{ . }}"
+              ollama pull {{ . }}
+              {{- end }}
+              kill $OLLAMA_PID
+              echo "모델 풀링 완료"
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "8Gi"
+              cpu: "4000m"
+      containers:
+        - name: ollama
+          image: {{ .Values.infrastructure.ollama.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.infrastructure.ollama.port }}
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          resources:
+            {{- toYaml .Values.infrastructure.ollama.resources | nindent 12 }}
+      volumes:
+        - name: ollama-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-ollama-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-ollama
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Release.Name }}-ollama
+  ports:
+    - port: {{ .Values.infrastructure.ollama.port }}
+      targetPort: {{ .Values.infrastructure.ollama.port }}
+{{- end }}

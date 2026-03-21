@@ -21,12 +21,17 @@ async def send_message(
     req: ChatRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    """AI 챗봇 메시지 전송 (세션: user_id 기반)"""
+    """AI 챗봇 메시지 전송 (의도 분류 라우팅)"""
     session_id = current_user["user_id"]
-    reply = await chat(req.message, session_id)
+    result = await chat(req.message, session_id, user_token=current_user["token"])
     return {
         "success": True,
-        "data": {"reply": reply, "session_id": session_id},
+        "data": {
+            "reply": result["response"],
+            "intent": result.get("intent", "GENERAL"),
+            "tools_used": result.get("tools_used", []),
+            "session_id": str(current_user["user_id"]),
+        },
         "message": "OK",
     }
 
