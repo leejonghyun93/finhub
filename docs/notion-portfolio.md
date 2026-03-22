@@ -140,7 +140,14 @@ helm/finhub/
 | `TransferSagaServiceTest` | 5 | Saga 성공/실패 Kafka 토픽 순서·보상 트랜잭션 |
 | `test_chat_service.py` | 11 | 의도 분류·chat()·세션 히스토리 (graph 모킹) |
 | `test_rag_service.py` | 7 | embed_query·search·build_context |
-| **합계** | **48** | |
+| **단위 합계** | **48** | Java 30 + Python 18 |
+| `UserIntegrationTest` | 4 | 회원가입→로그인→내정보 플로우, 중복이메일, 잘못된 비밀번호, 미인증 |
+| `BankingIntegrationTest` | 3 | 계좌개설→입금→목록, 잔액부족 송금 실패, 거래내역 페이징 |
+| `InvestmentIntegrationTest` | 3 | 포트폴리오→매수→보유종목, 수량부족 매도 실패, 매매내역 페이징 |
+| `PaymentIntegrationTest` | 3 | 수단등록→결제→내역, 미등록 수단 결제 실패, 내역 페이징 |
+| `InsuranceIntegrationTest` | 3 | 상품조회→가입→내역, 중복가입 실패, 보험 해지 |
+| **통합 합계** | **16** | H2 인메모리 DB, @MockBean Kafka/Redis |
+| **총합계** | **64** | |
 
 **구현 포인트**
 - Java: `@ExtendWith(MockitoExtension.class)` + `@InjectMocks` + `@Mock` BDDMockito 스타일
@@ -442,5 +449,5 @@ user / banking / investment / payment / insurance 5개 서비스에 H2 인메모
 | 모니터링 | 로그 확인 수준 | Prometheus + Grafana 메트릭 대시보드 |
 | DevOps | 수동 배포 | GitHub Actions CI/CD 파이프라인 |
 | 보안 | 하드코딩 | 환경변수 분리, .gitignore 관리 |
-| 테스트 | 없음 | 단위 48케이스 + 통합 16케이스 |
+| 테스트 | 없음 | 단위 48 + 통합 16 = **총 64케이스** |
 | IaC | 없음 | Terraform으로 K8s 프로비저닝 자동화 |
