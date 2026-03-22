@@ -50,6 +50,7 @@ Eureka 서비스 디스커버리와 API Gateway를 통해 유기적으로 연결
 | 🔄 **CI/CD** | GitHub Actions — PR 빌드/테스트 + 자동 Docker 이미지 배포 |
 | ✅ **단위 테스트** | JUnit5 + Mockito + pytest — 40케이스 (Java 22 + Python 18) |
 | 🔁 **Saga 패턴** | Choreography-based Saga로 분산 트랜잭션 보장 (송금 실패 시 보상 이벤트) |
+| 🤝 **바이브코딩** | Claude Code AI 페어 프로그래밍으로 개발 — AI 생성 코드 직접 검증/학습 |
 
 ---
 
