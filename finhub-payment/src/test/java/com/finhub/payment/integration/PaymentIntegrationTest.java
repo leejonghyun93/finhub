@@ -2,8 +2,6 @@ package com.finhub.payment.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finhub.payment.dto.event.PaymentCompletedEvent;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -30,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - H2 인메모리 DB (application-test.yml)
  * - Kafka: @MockBean KafkaTemplate 으로 대체 (실제 브로커 불필요)
  * - Eureka: disabled
+ * - 인증: Gateway가 주입하는 X-User-* 헤더 방식
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -37,8 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Payment 서비스 통합 테스트")
 class PaymentIntegrationTest {
 
-    private static final String JWT_SECRET =
-            "finhub-secret-key-must-be-at-least-256-bits-long-for-hs256";
     private static final String BASE_URL = "/api/v1/payment";
 
     @Autowired
@@ -55,11 +49,11 @@ class PaymentIntegrationTest {
     @Test
     @DisplayName("결제 수단 등록 → 결제 처리 → 내역 조회 전체 플로우 성공")
     void registerMethod_pay_getHistory_fullFlow() throws Exception {
-        String token = generateToken(20L, "pay1@finhub.com");
-
         // 1단계: 결제 수단 등록
         MvcResult methodResult = mockMvc.perform(post(BASE_URL + "/methods")
-                        .header("Authorization", "Bearer " + token)
+                        .header("X-User-Id", "20")
+                        .header("X-User-Email", "pay1@finhub.com")
+                        .header("X-User-Role", "ROLE_USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "methodType", "CARD",
@@ -76,7 +70,9 @@ class PaymentIntegrationTest {
 
         // 2단계: 결제 처리 (50,000원)
         mockMvc.perform(post(BASE_URL + "/pay")
-                        .header("Authorization", "Bearer " + token)
+                        .header("X-User-Id", "20")
+                        .header("X-User-Email", "pay1@finhub.com")
+                        .header("X-User-Role", "ROLE_USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "paymentMethodId", methodId,
@@ -88,7 +84,9 @@ class PaymentIntegrationTest {
 
         // 3단계: 결제 내역 조회 — 1건 확인
         mockMvc.perform(get(BASE_URL + "/history")
-                        .header("Authorization", "Bearer " + token))
+                        .header("X-User-Id", "20")
+                        .header("X-User-Email", "pay1@finhub.com")
+                        .header("X-User-Role", "ROLE_USER"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content.length()").value(1))
@@ -100,11 +98,11 @@ class PaymentIntegrationTest {
     @Test
     @DisplayName("등록되지 않은 결제 수단으로 결제 시 404 NOT FOUND 반환")
     void pay_unknownMethod_returnsNotFound() throws Exception {
-        String token = generateToken(21L, "pay2@finhub.com");
-
         // 존재하지 않는 methodId=9999 → PAYMENT_METHOD_NOT_FOUND → 404
         mockMvc.perform(post(BASE_URL + "/pay")
-                        .header("Authorization", "Bearer " + token)
+                        .header("X-User-Id", "21")
+                        .header("X-User-Email", "pay2@finhub.com")
+                        .header("X-User-Role", "ROLE_USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "paymentMethodId", 9999,
@@ -120,11 +118,11 @@ class PaymentIntegrationTest {
     @Test
     @DisplayName("결제 2회 후 내역 페이징 조회 성공")
     void getHistory_afterTwoPayments_returnsPagedResults() throws Exception {
-        String token = generateToken(22L, "pay3@finhub.com");
-
         // 결제 수단 등록
         MvcResult methodResult = mockMvc.perform(post(BASE_URL + "/methods")
-                        .header("Authorization", "Bearer " + token)
+                        .header("X-User-Id", "22")
+                        .header("X-User-Email", "pay3@finhub.com")
+                        .header("X-User-Role", "ROLE_USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "methodType", "BANK_ACCOUNT",
@@ -139,7 +137,9 @@ class PaymentIntegrationTest {
         // 결제 2회
         for (int i = 1; i <= 2; i++) {
             mockMvc.perform(post(BASE_URL + "/pay")
-                            .header("Authorization", "Bearer " + token)
+                            .header("X-User-Id", "22")
+                            .header("X-User-Email", "pay3@finhub.com")
+                            .header("X-User-Role", "ROLE_USER")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(Map.of(
                                     "paymentMethodId", methodId,
@@ -150,25 +150,14 @@ class PaymentIntegrationTest {
 
         // 내역 조회 — userId=22 기준 2건
         mockMvc.perform(get(BASE_URL + "/history")
-                        .header("Authorization", "Bearer " + token)
+                        .header("X-User-Id", "22")
+                        .header("X-User-Email", "pay3@finhub.com")
+                        .header("X-User-Role", "ROLE_USER")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content.length()").value(2))
                 .andExpect(jsonPath("$.data.page.totalElements").value(2));
-    }
-
-    // ── 헬퍼 메서드 ──────────────────────────────────────────────────────────
-
-    private String generateToken(Long userId, String email) {
-        SecretKey key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8));
-        return Jwts.builder()
-                .subject(email)
-                .claim("userId", userId)
-                .claim("role", "ROLE_USER")
-                .expiration(new Date(System.currentTimeMillis() + 3_600_000L))
-                .signWith(key)
-                .compact();
     }
 }

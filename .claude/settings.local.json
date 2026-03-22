@@ -47,7 +47,18 @@
       "Bash(cd:*)",
       "Bash(git:*)",
       "Bash(do echo:*)",
-      "Bash(./mvnw test:*)"
+      "Bash(./mvnw test:*)",
+      "Bash(find D:/finhub/finhub-investment/src/main/java/com/finhub/investment/domain -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-investment/src/main/java/com/finhub/investment/dto -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-investment/src/main/java/com/finhub/investment/controller -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-payment/src/main/java/com/finhub/payment/controller -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-payment/src/main/java/com/finhub/payment/service -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-insurance/src/main/java/com/finhub/insurance/domain -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-insurance/src/main/java/com/finhub/insurance/dto -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-insurance/src/main/java/com/finhub/insurance/controller -type f -name *.java)",
+      "Bash(find D:/finhub/finhub-insurance/src/main/java/com/finhub/insurance/service -type f -name *.java)",
+      "Bash(xargs grep:*)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text'''']\\)\")"
     ]
   }
 }

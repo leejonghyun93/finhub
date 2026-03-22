@@ -69,9 +69,11 @@ class UserIntegrationTest {
         String accessToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
                 .path("data").path("accessToken").asText();
 
-        // 3단계: 내 정보 조회
+        // 3단계: 내 정보 조회 (Gateway가 주입하는 X-User-* 헤더 방식)
         mockMvc.perform(get("/api/v1/users/me")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .header("X-User-Id", "1")
+                        .header("X-User-Email", email)
+                        .header("X-User-Role", "ROLE_USER"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.email").value(email))
