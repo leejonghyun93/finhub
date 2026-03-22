@@ -736,6 +736,34 @@ finhub/
 
 ---
 
+## 📖 회고
+
+### 아쉬운 점 / 개선하고 싶은 것
+
+**1. API Gateway 인증 로직 개선 여지**
+Gateway에서 JWT 검증 후 User 정보를 헤더로 전달하는 방식이지만, 서비스마다 중복으로 JWT를 다시 파싱하는 부분이 있어 개선이 필요합니다.
+
+**2. 통합 테스트 커버리지 확대 필요**
+finhub-user와 finhub-banking에만 H2 인메모리 DB 기반 통합 테스트가 구현되어 있습니다. finhub-investment, finhub-payment, finhub-insurance 등 나머지 서비스의 통합 테스트가 미구현 상태입니다.
+
+**3. ELK 스택 미구현**
+ELK 스택 도입을 시도했으나 minikube 단일 노드 환경에서 메모리 부족으로 클러스터 전체가 다운되어 결국 Prometheus + Grafana로 모니터링을 일원화했습니다.
+
+### 이 프로젝트로 얻은 것
+
+| 영역 | 이전 | 이후 |
+|------|------|------|
+| 백엔드 | 단일 Spring Boot 앱 | MSA 10개 서비스 설계/운영 경험 |
+| 인프라 | Docker Compose | Kubernetes + Helm 배포 자동화 |
+| AI | API 단순 호출 | LangGraph 멀티 에이전트 + RAG 설계 |
+| 모니터링 | 로그 확인 수준 | Prometheus + Grafana 메트릭 대시보드 |
+| DevOps | 수동 배포 | GitHub Actions CI/CD 파이프라인 |
+| 보안 | 하드코딩 | 환경변수 분리, .gitignore 관리 |
+| 테스트 | 없음 | 단위 48케이스 + 통합 39케이스 |
+| IaC | 없음 | Terraform으로 K8s 프로비저닝 자동화 |
+
+---
+
 <div align="center">
 
 **FinHub** — MSA 기반 개인 통합 금융 플랫폼
