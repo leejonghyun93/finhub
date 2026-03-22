@@ -431,10 +431,7 @@ OpenAI API 단순 호출 수준에서 벗어나, LangGraph로 의도 분류 → 
 **1. API Gateway 인증 로직 개선 여지**
 현재 Gateway에서 JWT 검증 후 각 서비스로 User 정보를 헤더로 전달하는 방식인데, 서비스마다 중복으로 JWT를 다시 파싱하는 부분이 있어 개선이 필요합니다.
 
-**2. 통합 테스트 커버리지 확대 필요**
-user / banking / investment / payment / insurance 5개 서비스에 H2 인메모리 DB 기반 통합 테스트를 구현했습니다. finhub-search, finhub-notification 등 나머지 서비스의 통합 테스트는 미구현 상태입니다.
-
-**3. ELK 스택 미구현**
+**2. ELK 스택 미구현**
 중앙화된 로그 수집을 위해 ELK(Elasticsearch + Logstash + Kibana) 스택 도입을 시도했으나, minikube 단일 노드 환경에서 메모리 부족으로 클러스터 전체가 다운되는 문제가 발생했습니다. 결국 Prometheus + Grafana로 모니터링을 일원화했으며, 로그 수집은 프로덕션 환경의 별도 로그 클러스터에서 구성하는 것이 현실적인 접근법임을 확인했습니다.
 
 ---
@@ -449,5 +446,5 @@ user / banking / investment / payment / insurance 5개 서비스에 H2 인메모
 | 모니터링 | 로그 확인 수준 | Prometheus + Grafana 메트릭 대시보드 |
 | DevOps | 수동 배포 | GitHub Actions CI/CD 파이프라인 |
 | 보안 | 하드코딩 | 환경변수 분리, .gitignore 관리 |
-| 테스트 | 없음 | 단위 48 + 통합 16 = **총 64케이스** |
+| 테스트 | 없음 | 단위 48 + 통합 23 = **총 71케이스** |
 | IaC | 없음 | Terraform으로 K8s 프로비저닝 자동화 |
