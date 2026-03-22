@@ -16,6 +16,7 @@
 ![Elasticsearch](https://img.shields.io/badge/Elasticsearch-8.13-005571?style=for-the-badge&logo=elasticsearch&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-Helm-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-1.6+-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 
 **MSA 기반 개인 통합 금융 플랫폼**
@@ -167,6 +168,7 @@ Eureka 서비스 디스커버리와 API Gateway를 통해 유기적으로 연결
 | LLM Runtime | Ollama | 로컬 LLM 추론 |
 | Container | Docker + Docker Compose | 로컬 개발 환경 |
 | Orchestration | Kubernetes + Helm | 프로덕션 배포 |
+| IaC | Terraform 1.6+ | K8s 리소스 프로비저닝 자동화 |
 | Monitoring | Prometheus + Grafana | 메트릭 수집 및 대시보드 |
 | CI/CD | GitHub Actions | 자동 빌드/테스트/배포 |
 
@@ -510,6 +512,49 @@ helm upgrade finhub helm/finhub -n finhub --timeout 30m
 
 ---
 
+### 🏗️ Terraform으로 배포
+
+> Kubernetes Provider + Helm Provider로 minikube 배포를 자동화합니다.
+
+#### Prerequisites
+
+- [Terraform 1.6+](https://developer.hashicorp.com/terraform/install)
+- minikube 실행 중 + kubeconfig 설정 완료
+
+```bash
+# terraform/ 디렉토리로 이동
+cd terraform
+
+# 1. 프로바이더 초기화
+terraform init
+
+# 2. 배포 계획 확인
+terraform plan
+
+# 3. 배포 실행 (네임스페이스 생성 + Helm 릴리스)
+terraform apply
+
+# 4. 배포 상태 확인
+terraform output
+```
+
+**변수 오버라이드**
+
+```bash
+# 네임스페이스나 타임아웃 변경
+terraform apply \
+  -var="namespace=finhub-prod" \
+  -var="helm_timeout=900"
+```
+
+**리소스 제거**
+
+```bash
+terraform destroy
+```
+
+---
+
 ### 🛠️ 로컬 개발 환경 실행
 
 ```bash
@@ -652,6 +697,15 @@ finhub/
 ├── ☸️  helm/finhub/                  # Helm Chart
 │   ├── values.yaml                   # 전체 배포 설정
 │   └── templates/                    # 20개 K8s 리소스 템플릿
+│
+├── 🏗️  terraform/                    # Terraform IaC
+│   ├── providers.tf                  # Kubernetes + Helm 프로바이더
+│   ├── variables.tf                  # namespace, timeout, kubeconfig_path
+│   ├── main.tf                       # 네임스페이스 + Helm 릴리스 모듈 호출
+│   ├── outputs.tf                    # namespace, helm_release_status
+│   └── modules/
+│       ├── namespace/main.tf         # kubernetes_namespace 리소스
+│       └── helm-release/main.tf      # helm_release 리소스
 │
 ├── 🔭 finhub-eureka/                 # Service Registry
 ├── 🚪 finhub-gateway/                # API Gateway + JWT 필터
