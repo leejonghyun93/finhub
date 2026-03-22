@@ -1,0 +1,107 @@
+name: CI - Build & Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  # ============================================================
+  # Spring Boot Services - Build & Test (Maven)
+  # ============================================================
+  build-spring:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - finhub-eureka
+          - finhub-gateway
+          - finhub-user
+          - finhub-banking
+          - finhub-investment
+          - finhub-payment
+          - finhub-insurance
+          - finhub-search
+          - finhub-notification
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build ${{ matrix.service }}
+        run: ./mvnw clean install -pl ${{ matrix.service }} -am -DskipTests
+        env:
+          MAVEN_OPTS: "-Xmx512m"
+
+      - name: Test ${{ matrix.service }}
+        run: ./mvnw test -pl ${{ matrix.service }}
+        env:
+          MAVEN_OPTS: "-Xmx512m"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/
+          retention-days: 7
+
+  # ============================================================
+  # finhub-ai (FastAPI) - Lint Check
+  # ============================================================
+  lint-python:
+    name: Lint finhub-ai
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: finhub-ai
+        run: |
+          pip install --upgrade pip
+          pip install flake8 black isort
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: flake8 lint
+        working-directory: finhub-ai
+        run: flake8 . --max-line-length=120 --exclude=__pycache__,.venv
+
+      - name: black format check
+        working-directory: finhub-ai
+        run: black --check --line-length=120 .
+
+  # ============================================================
+  # CI Summary
+  # ============================================================
+  ci-success:
+    name: CI Passed
+    needs: [build-spring, lint-python]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.build-spring.result }}" == "success" && "${{ needs.lint-python.result }}" == "success" ]]; then
+            echo "✅ All CI checks passed"
+          else
+            echo "❌ CI failed - build: ${{ needs.build-spring.result }}, lint: ${{ needs.lint-python.result }}"
+            exit 1
+          fi
