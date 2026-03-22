@@ -127,7 +127,58 @@ helm/finhub/
 
 ---
 
-### 5. GitHub Actions CI/CD 파이프라인
+### 5. 단위 테스트 코드 작성 (Java + Python)
+
+외부 의존성 없이 비즈니스 로직만 검증하는 **순수 단위 테스트**를 작성했습니다.
+
+| 테스트 파일 | 케이스 수 | 검증 내용 |
+| --- | --- | --- |
+| `JwtTokenProviderTest` | 6 | AccessToken/RefreshToken 생성·검증·위조 토큰 거부 |
+| `UserServiceTest` | 11 | 회원가입·로그인·로그아웃·토큰 재발급·내 정보 조회 |
+| `BankingServiceTest` | 8 | 계좌 개설·입금·송금 위임·거래내역 페이징 |
+| `TransferSagaServiceTest` | 5 | Saga 성공/실패 Kafka 토픽 순서·보상 트랜잭션 |
+| `test_chat_service.py` | 11 | 의도 분류·chat()·세션 히스토리 (graph 모킹) |
+| `test_rag_service.py` | 7 | embed_query·search·build_context |
+| **합계** | **48** | |
+
+**구현 포인트**
+- Java: `@ExtendWith(MockitoExtension.class)` + `@InjectMocks` + `@Mock` BDDMockito 스타일
+- `ArgumentCaptor`로 Kafka 토픽 발행 **순서**까지 검증
+- Python: `unittest.mock.patch`로 LangGraph `graph.ainvoke`, `OllamaEmbeddings` 모킹
+- 실제 Ollama 서버·DB 없이 순수 로직만 테스트
+
+---
+
+### 6. Choreography-based Saga 패턴 분산 트랜잭션
+
+단순 로컬 트랜잭션으로는 보장할 수 없는 **서비스 간 분산 트랜잭션**을 Saga 패턴으로 해결했습니다.
+
+```
+[송금 요청]
+BankingServiceImpl.transfer()
+        ↓ 위임
+TransferSagaService.executeTransfer()
+        │
+        ├─ 1. transfer.initiated 발행 (Kafka)
+        │
+        ├─ 2. 계좌 조회 · 잔액 이체 · 거래내역 저장
+        │
+        ├─ 성공 → banking.transfer.completed 발행 (Kafka)
+        │         └─ finhub-notification이 소비 → 알림
+        │
+        └─ 실패 → transfer.failed 발행 (Kafka) + 예외 재전파
+                  └─ handleTransferFailed() 보상 처리 (감사 로그)
+```
+
+**구현 포인트**
+- `BankingServiceImpl`은 송금 로직을 직접 갖지 않고 `TransferSagaService`에 **위임** — SRP 준수
+- 이벤트 3종 설계: `TransferInitiatedEvent` / `TransferCompletedEvent` / `TransferFailedEvent`
+- `@Transactional` 범위 내에서 예외 발생 시 DB 롤백 + Kafka 보상 이벤트 이중 보장
+- Choreography 방식으로 중앙 오케스트레이터 없이 서비스 간 자율 협력
+
+---
+
+### 7. GitHub Actions CI/CD 파이프라인
 
 PR 생성부터 Docker Hub 이미지 배포까지 **전 과정을 자동화**했습니다.
 

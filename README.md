@@ -47,6 +47,8 @@ Eureka 서비스 디스커버리와 API Gateway를 통해 유기적으로 연결
 | ☸️ **Kubernetes 배포** | Helm Chart로 minikube 원클릭 배포 |
 | 📊 **모니터링** | Prometheus + Grafana 실시간 메트릭 대시보드 |
 | 🔄 **CI/CD** | GitHub Actions — PR 빌드/테스트 + 자동 Docker 이미지 배포 |
+| ✅ **단위 테스트** | JUnit5 + Mockito + pytest — 40케이스 (Java 22 + Python 18) |
+| 🔁 **Saga 패턴** | Choreography-based Saga로 분산 트랜잭션 보장 (송금 실패 시 보상 이벤트) |
 
 ---
 
@@ -131,6 +133,7 @@ Eureka 서비스 디스커버리와 API Gateway를 통해 유기적으로 연결
 | ORM | Spring Data JPA + Hibernate |
 | Migration | Flyway |
 | Metrics | Micrometer + Prometheus |
+| Testing | JUnit5 + Mockito (단위 테스트 22케이스) |
 
 ### AI Service (Python)
 | 분류 | 기술 |
@@ -142,6 +145,7 @@ Eureka 서비스 디스커버리와 API Gateway를 통해 유기적으로 연결
 | Embeddings | nomic-embed-text |
 | Vector DB | pgvector (PostgreSQL 확장) |
 | Auth | JWT 검증 (python-jose) |
+| Testing | pytest + pytest-asyncio (단위 테스트 18케이스) |
 
 ### Frontend
 | 분류 | 기술 |
