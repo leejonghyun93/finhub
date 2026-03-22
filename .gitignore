@@ -32,4 +32,14 @@ build/
 ### VS Code ###
 .vscode/
 
+# 환경변수 파일 (절대 커밋 금지)
 .env
+**/.env
+.env.local
+**/.env.local
+.env.production
+**/.env.production
+
+# Helm secrets override 파일
+helm/**/secrets.yaml
+helm/**/values.secret.yaml

@@ -6,11 +6,17 @@ global:
   imagePullPolicy: Never   # minikube 로컬 이미지 사용
 
 # ============================================================
-# Secrets (민감정보 - 실 운영 시 반드시 변경)
+# Secrets
+# ⚠️ 아래 값은 로컬/개발 환경 기본값입니다.
+# 실제 배포 시 반드시 아래 방법으로 override하세요:
+#   helm upgrade finhub helm/finhub \
+#     --set postgres.password=실제비밀번호 \
+#     --set jwtSecret=실제JWT시크릿
+# 또는 별도 secrets.yaml 파일로 관리하세요 (git 제외)
 # ============================================================
 postgres:
   username: postgres
-  password: postgres        # Secret으로 관리
+  password: postgres
 
 jwtSecret: "finhub-secret-key-must-be-at-least-256-bits-long-for-hs256"
 

@@ -6,9 +6,9 @@ spring:
     name: finhub-banking
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/finhub_banking
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/finhub_banking}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -25,7 +25,7 @@ spring:
     locations: classpath:db/migration
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -33,10 +33,10 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
 
 jwt:
-  secret: finhub-secret-key-must-be-at-least-256-bits-long-for-hs256
+  secret: ${JWT_SECRET:finhub-secret-key-must-be-at-least-256-bits-long-for-hs256}
 
 management:
   endpoints:

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "llama3.2"
     OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
 
-    JWT_SECRET: str = "finhub-secret-key-must-be-at-least-256-bits-long-for-hs256"
+    JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
     EUREKA_SERVER_URL: str = "http://localhost:8761/eureka"
