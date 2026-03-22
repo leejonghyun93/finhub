@@ -22,8 +22,8 @@ spec:
             - sh
             - -c
             - |
-              until nc -z {{ .Release.Name }}-eureka {{ .Values.eureka.port }}; do
-                echo "Waiting for Eureka..."; sleep 5
+              until wget -qO- http://{{ .Release.Name }}-eureka:{{ .Values.eureka.port }}/actuator/health 2>/dev/null | grep -q UP; do
+                echo "Waiting for Eureka..."; sleep 3
               done
       containers:
         - name: gateway

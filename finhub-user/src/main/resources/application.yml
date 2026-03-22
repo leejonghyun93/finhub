@@ -38,3 +38,12 @@ jwt:
   secret: finhub-secret-key-must-be-at-least-256-bits-long-for-hs256
   access-token-expiration: 1800000
   refresh-token-expiration: 604800000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    prometheus:
+      enabled: true

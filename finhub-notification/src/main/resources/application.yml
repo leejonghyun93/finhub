@@ -48,3 +48,12 @@ eureka:
 
 jwt:
   secret: finhub-secret-key-must-be-at-least-256-bits-long-for-hs256
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    prometheus:
+      enabled: true

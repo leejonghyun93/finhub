@@ -210,3 +210,30 @@ ai:
     limits:
       memory: "1Gi"
       cpu: "500m"
+
+# ============================================================
+# Monitoring
+# ============================================================
+monitoring:
+  enabled: true
+  prometheus:
+    image: prom/prometheus:latest
+    port: 9090
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  grafana:
+    image: grafana/grafana:10.4.3
+    port: 3000
+    nodePort: 30030
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "300m"

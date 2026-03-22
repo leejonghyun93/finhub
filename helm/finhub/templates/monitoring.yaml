@@ -1,0 +1,298 @@
+{{- if .Values.monitoring.enabled }}
+# ============================================================
+# Prometheus ConfigMap
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-prometheus-config
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'finhub-gateway'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-gateway:{{ .Values.gateway.port }}']
+
+      - job_name: 'finhub-user'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-user:{{ .Values.user.port }}']
+
+      - job_name: 'finhub-banking'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-banking:{{ .Values.banking.port }}']
+
+      - job_name: 'finhub-investment'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-investment:{{ .Values.investment.port }}']
+
+      - job_name: 'finhub-payment'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-payment:{{ .Values.payment.port }}']
+
+      - job_name: 'finhub-insurance'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-insurance:{{ .Values.insurance.port }}']
+
+      - job_name: 'finhub-search'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-search:{{ .Values.search.port }}']
+
+      - job_name: 'finhub-notification'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['{{ .Release.Name }}-notification:{{ .Values.notification.port }}']
+---
+# ============================================================
+# Grafana Datasource ConfigMap
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-datasource
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://{{ .Release.Name }}-prometheus:{{ .Values.monitoring.prometheus.port }}
+        isDefault: true
+        editable: true
+---
+# ============================================================
+# Grafana Dashboard ConfigMap
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-dashboard-provider
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+data:
+  dashboard-provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'finhub'
+        orgId: 1
+        folder: 'FinHub'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-dashboard
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+data:
+  finhub-dashboard.json: |
+    {
+      "title": "FinHub MSA Dashboard",
+      "uid": "finhub-msa",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "15s",
+      "panels": [
+        {
+          "id": 1,
+          "title": "HTTP 요청 처리율 (RPS)",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "sum by (job) (rate(http_server_requests_seconds_count[1m]))",
+            "legendFormat": "{{`{{job}}`}}"
+          }]
+        },
+        {
+          "id": 2,
+          "title": "HTTP 평균 응답시간 (ms)",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [{
+            "expr": "sum by (job) (rate(http_server_requests_seconds_sum[1m])) / sum by (job) (rate(http_server_requests_seconds_count[1m])) * 1000",
+            "legendFormat": "{{`{{job}}`}}"
+          }]
+        },
+        {
+          "id": 3,
+          "title": "JVM Heap 사용량",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [{
+            "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+            "legendFormat": "{{`{{job}}`}} - {{`{{id}}`}}"
+          }]
+        },
+        {
+          "id": 4,
+          "title": "JVM 스레드 수",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [{
+            "expr": "jvm_threads_live_threads",
+            "legendFormat": "{{`{{job}}`}}"
+          }]
+        },
+        {
+          "id": 5,
+          "title": "HTTP 4xx/5xx 에러율",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+          "targets": [{
+            "expr": "sum by (job, status) (rate(http_server_requests_seconds_count{status=~\"4..|5..\"}[1m]))",
+            "legendFormat": "{{`{{job}}`}} {{`{{status}}`}}"
+          }]
+        },
+        {
+          "id": 6,
+          "title": "CPU 프로세스 사용률",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+          "targets": [{
+            "expr": "process_cpu_usage",
+            "legendFormat": "{{`{{job}}`}}"
+          }]
+        }
+      ]
+    }
+---
+# ============================================================
+# Prometheus Deployment
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-prometheus
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: {{ .Values.monitoring.prometheus.image }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.retention.time=7d"
+          ports:
+            - containerPort: {{ .Values.monitoring.prometheus.port }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+          resources:
+            {{- toYaml .Values.monitoring.prometheus.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Release.Name }}-prometheus
+  ports:
+    - port: {{ .Values.monitoring.prometheus.port }}
+      targetPort: {{ .Values.monitoring.prometheus.port }}
+---
+# ============================================================
+# Grafana Deployment
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-grafana
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-grafana
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-grafana
+    spec:
+      containers:
+        - name: grafana
+          image: {{ .Values.monitoring.grafana.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.monitoring.grafana.port }}
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+            - name: GF_FEATURE_TOGGLES_ENABLE
+              value: ""
+            - name: GF_SERVER_HTTP_PORT
+              value: "3000"
+          volumeMounts:
+            - name: datasource
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: dashboard
+              mountPath: /var/lib/grafana/dashboards
+          resources:
+            {{- toYaml .Values.monitoring.grafana.resources | nindent 12 }}
+      volumes:
+        - name: datasource
+          configMap:
+            name: {{ .Release.Name }}-grafana-datasource
+        - name: dashboard-provider
+          configMap:
+            name: {{ .Release.Name }}-grafana-dashboard-provider
+        - name: dashboard
+          configMap:
+            name: {{ .Release.Name }}-grafana-dashboard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-grafana
+  labels:
+    {{- include "finhub.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    app: {{ .Release.Name }}-grafana
+  ports:
+    - port: {{ .Values.monitoring.grafana.port }}
+      targetPort: {{ .Values.monitoring.grafana.port }}
+      nodePort: {{ .Values.monitoring.grafana.nodePort }}
+{{- end }}

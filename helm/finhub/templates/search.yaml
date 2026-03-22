@@ -16,14 +16,18 @@ spec:
         app: {{ .Release.Name }}-search
     spec:
       initContainers:
-        - name: wait-deps
+        - name: wait-elasticsearch
           image: busybox:1.36
           command:
             - sh
             - -c
-            - |
-              until nc -z {{ .Release.Name }}-elasticsearch {{ .Values.infrastructure.elasticsearch.port }}; do echo "Waiting for Elasticsearch..."; sleep 5; done
-              until nc -z {{ .Release.Name }}-eureka {{ .Values.eureka.port }}; do echo "Waiting for Eureka..."; sleep 3; done
+            - until wget -qO- http://{{ .Release.Name }}-elasticsearch:{{ .Values.infrastructure.elasticsearch.port }}/_cluster/health 2>/dev/null | grep -q '"status"'; do echo "Waiting for Elasticsearch..."; sleep 3; done
+        - name: wait-eureka
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until wget -qO- http://{{ .Release.Name }}-eureka:{{ .Values.eureka.port }}/actuator/health 2>/dev/null | grep -q UP; do echo "Waiting for Eureka..."; sleep 3; done
       containers:
         - name: search
           image: "{{ .Values.search.image }}:{{ .Values.global.imageTag }}"

@@ -18,14 +18,7 @@ spec:
       initContainers:
         - name: wait-zookeeper
           image: busybox:1.36
-          command:
-            - sh
-            - -c
-            - |
-              until nc -z {{ .Release.Name }}-zookeeper {{ .Values.infrastructure.zookeeper.port }}; do
-                echo "Waiting for Zookeeper..."
-                sleep 5
-              done
+          command: ["/bin/sh", "-c", "echo 'Waiting for Zookeeper 20s...'; sleep 20; echo 'Done'"]
       containers:
         - name: kafka
           image: {{ .Values.infrastructure.kafka.image }}

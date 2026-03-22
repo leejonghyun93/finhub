@@ -16,15 +16,24 @@ spec:
         app: {{ .Release.Name }}-user
     spec:
       initContainers:
-        - name: wait-deps
+        - name: wait-postgres
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - until pg_isready -h {{ .Release.Name }}-postgres -p {{ .Values.infrastructure.postgres.port }}; do echo "Waiting for PostgreSQL..."; sleep 2; done
+        - name: wait-redis
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - until redis-cli -h {{ .Release.Name }}-redis -p {{ .Values.infrastructure.redis.port }} ping 2>/dev/null | grep -q PONG; do echo "Waiting for Redis..."; sleep 2; done
+        - name: wait-eureka
           image: busybox:1.36
           command:
             - sh
             - -c
-            - |
-              until nc -z {{ .Release.Name }}-postgres {{ .Values.infrastructure.postgres.port }}; do echo "Waiting for PostgreSQL..."; sleep 3; done
-              until nc -z {{ .Release.Name }}-redis {{ .Values.infrastructure.redis.port }}; do echo "Waiting for Redis..."; sleep 3; done
-              until nc -z {{ .Release.Name }}-eureka {{ .Values.eureka.port }}; do echo "Waiting for Eureka..."; sleep 3; done
+            - until wget -qO- http://{{ .Release.Name }}-eureka:{{ .Values.eureka.port }}/actuator/health 2>/dev/null | grep -q UP; do echo "Waiting for Eureka..."; sleep 3; done
       containers:
         - name: user
           image: "{{ .Values.user.image }}:{{ .Values.global.imageTag }}"

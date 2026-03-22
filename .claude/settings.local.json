@@ -21,7 +21,30 @@
       "Bash(kubectl describe:*)",
       "Bash(minikube status:*)",
       "Bash(minikube start:*)",
-      "Bash(docker images:*)"
+      "Bash(docker images:*)",
+      "Bash(wc -l /d/finhub/finhub-ai/*.py /d/finhub/finhub-ai/services/*.py)",
+      "Bash(for svc:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $svc ===\")",
+      "Read(//d/finhub/$svc/src/main/resources/**)",
+      "Bash(done)",
+      "Bash(D:/finhub/helm/finhub/values.yaml:*)",
+      "Bash(helm template:*)",
+      "Bash(minikube ip:*)",
+      "Bash(for f:*)",
+      "Bash(echo \"=== $f ===\")",
+      "Read(//d/finhub/**)",
+      "Bash(echo -n \"$svc: \")",
+      "Bash(file=\"D:/finhub/$svc/src/main/resources/application.yml\")",
+      "Bash(sed -i 's/include: health,prometheus/include: health,prometheus,info/' \"$file\")",
+      "Bash(kubectl cluster-info:*)",
+      "Bash(helm ls:*)",
+      "Bash(helm rollback:*)",
+      "Bash(__NEW_LINE_345741f48119664e__ for:*)",
+      "Bash(sed -i 's|image: bitnami/kafka:latest|image: busybox:1.36|g' \"$f\")",
+      "Bash(sed -i 's|until kafka-broker-api-versions.sh --bootstrap-server {{ .Release.Name }}-kafka:{{ .Values.infrastructure.kafka.port }} 2>/dev/null; do echo \"\"Waiting for Kafka...\"\"; sleep 3; done|until wget -qO- http://{{ .Release.Name }}-kafka:{{ .Values.infrastructure.kafka.port }} 2>\\\\&1 | grep -qv \"\"refused\\\\\\\\|wget\"\"; do echo \"\"Waiting for Kafka...\"\"; sleep 3; done|g' \"$f\")",
+      "Bash(__NEW_LINE_345741f48119664e__ echo:*)",
+      "Bash(cd:*)"
     ]
   }
 }

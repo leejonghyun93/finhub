@@ -16,17 +16,23 @@ spec:
         app: {{ .Release.Name }}-ai
     spec:
       initContainers:
-        - name: wait-deps
+        - name: wait-postgres
+          image: postgres:15-alpine
+          command: ["/bin/sh", "-c", "until pg_isready -h {{ .Release.Name }}-postgres -p {{ .Values.infrastructure.postgres.port }}; do echo 'Waiting for PostgreSQL...'; sleep 2; done; echo 'PostgreSQL ready, waiting 10s...'; sleep 10"]
+        - name: wait-eureka
           image: busybox:1.36
           command:
             - sh
             - -c
-            - |
-              until nc -z {{ .Release.Name }}-postgres {{ .Values.infrastructure.postgres.port }}; do echo "Waiting for PostgreSQL..."; sleep 3; done
-              until nc -z {{ .Release.Name }}-eureka {{ .Values.eureka.port }}; do echo "Waiting for Eureka..."; sleep 3; done
-              {{- if .Values.infrastructure.ollama.enabled }}
-              until nc -z {{ .Release.Name }}-ollama {{ .Values.infrastructure.ollama.port }}; do echo "Waiting for Ollama..."; sleep 5; done
-              {{- end }}
+            - until wget -qO- http://{{ .Release.Name }}-eureka:{{ .Values.eureka.port }}/actuator/health 2>/dev/null | grep -q UP; do echo "Waiting for Eureka..."; sleep 3; done
+        {{- if .Values.infrastructure.ollama.enabled }}
+        - name: wait-ollama
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until wget -qO- http://{{ .Release.Name }}-ollama:{{ .Values.infrastructure.ollama.port }} 2>/dev/null; do echo "Waiting for Ollama..."; sleep 3; done
+        {{- end }}
       containers:
         - name: ai
           image: "{{ .Values.ai.image }}:{{ .Values.ai.imageTag | default .Values.global.imageTag }}"
