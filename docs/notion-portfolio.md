@@ -146,8 +146,10 @@ helm/finhub/
 | `InvestmentIntegrationTest` | 3 | 포트폴리오→매수→보유종목, 수량부족 매도 실패, 매매내역 페이징 |
 | `PaymentIntegrationTest` | 3 | 수단등록→결제→내역, 미등록 수단 결제 실패, 내역 페이징 |
 | `InsuranceIntegrationTest` | 3 | 상품조회→가입→내역, 중복가입 실패, 보험 해지 |
-| **통합 합계** | **16** | H2 인메모리 DB, @MockBean Kafka/Redis |
-| **총합계** | **64** | |
+| `SearchIntegrationTest` | 3 | 키워드 검색, 파라미터 없는 전체 조회, 카테고리 필터 |
+| `NotificationIntegrationTest` | 4 | 알림 목록 조회, 단건 읽음, 전체 읽음, 삭제 |
+| **통합 합계** | **23** | H2 인메모리 DB, @MockBean Kafka/Redis/Elasticsearch |
+| **총합계** | **71** | |
 
 **구현 포인트**
 - Java: `@ExtendWith(MockitoExtension.class)` + `@InjectMocks` + `@Mock` BDDMockito 스타일
@@ -273,7 +275,22 @@ resources:
 - Ollama(LLM)는 `enabled: false` 기본값으로 설정, 외부 Ollama 엔드포인트 연결 방식으로 전환
 - minikube `--memory=8192 --cpus=4` 권장 사양 문서화
 
-**배운 점**: 컨테이너 환경에서는 JVM이 호스트 전체 메모리를 사용하려 하므로 반드시 `Xmx` 명시 필요. K8s `resources.limits`와 JVM 힙 크기를 함께 조율해야 함.
+- HikariCP `maximum-pool-size: 10` 설정 — 기본 10이지만 명시적으로 선언해 커넥션 누수 방지
+- Tomcat `max-threads: 200` 설정 — 기본 200이지만 명시적 선언으로 부하 시 스레드 한계 가시화
+
+```yaml
+# application.yml — 각 서비스 공통 적용
+server:
+  tomcat:
+    threads:
+      max: 200          # 최대 200 스레드 (기본값 200, 명시적 관리)
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 10   # DB 커넥션 풀 최대 10개 (기본값 10, 명시적 관리)
+```
+
+**배운 점**: 컨테이너 환경에서는 JVM이 호스트 전체 메모리를 사용하려 하므로 반드시 `Xmx` 명시 필요. K8s `resources.limits`와 JVM 힙 크기를 함께 조율해야 하며, HikariCP 커넥션 수와 Tomcat 스레드 수도 포드 수 × 커넥션 수가 DB max_connections를 초과하지 않도록 명시적으로 관리해야 함.
 
 ---
 

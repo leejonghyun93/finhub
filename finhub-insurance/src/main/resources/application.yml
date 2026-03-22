@@ -1,5 +1,8 @@
 server:
   port: 8085
+  tomcat:
+    threads:
+      max: 200
 
 spring:
   application:
@@ -10,6 +13,8 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
 
   jpa:
     hibernate:
