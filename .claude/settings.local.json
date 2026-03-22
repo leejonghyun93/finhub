@@ -46,7 +46,8 @@
       "Bash(__NEW_LINE_345741f48119664e__ echo:*)",
       "Bash(cd:*)",
       "Bash(git:*)",
-      "Bash(do echo:*)"
+      "Bash(do echo:*)",
+      "Bash(./mvnw test:*)"
     ]
   }
 }
