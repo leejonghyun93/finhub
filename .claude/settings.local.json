@@ -44,7 +44,9 @@
       "Bash(sed -i 's|image: bitnami/kafka:latest|image: busybox:1.36|g' \"$f\")",
       "Bash(sed -i 's|until kafka-broker-api-versions.sh --bootstrap-server {{ .Release.Name }}-kafka:{{ .Values.infrastructure.kafka.port }} 2>/dev/null; do echo \"\"Waiting for Kafka...\"\"; sleep 3; done|until wget -qO- http://{{ .Release.Name }}-kafka:{{ .Values.infrastructure.kafka.port }} 2>\\\\&1 | grep -qv \"\"refused\\\\\\\\|wget\"\"; do echo \"\"Waiting for Kafka...\"\"; sleep 3; done|g' \"$f\")",
       "Bash(__NEW_LINE_345741f48119664e__ echo:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git:*)",
+      "Bash(do echo:*)"
     ]
   }
 }
