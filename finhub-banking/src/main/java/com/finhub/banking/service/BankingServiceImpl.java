@@ -4,7 +4,6 @@ import com.finhub.banking.domain.Account;
 import com.finhub.banking.domain.AccountStatus;
 import com.finhub.banking.domain.Transaction;
 import com.finhub.banking.domain.TransactionType;
-import com.finhub.banking.dto.event.TransferCompletedEvent;
 import com.finhub.banking.dto.request.CreateAccountRequest;
 import com.finhub.banking.dto.request.DepositRequest;
 import com.finhub.banking.dto.request.TransferRequest;
@@ -17,12 +16,10 @@ import com.finhub.banking.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -32,11 +29,9 @@ import java.util.stream.Collectors;
 @Transactional
 public class BankingServiceImpl implements BankingService {
 
-    private static final String TRANSFER_TOPIC = "banking.transfer.completed";
-
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
-    private final KafkaTemplate<String, TransferCompletedEvent> kafkaTemplate;
+    private final TransferSagaService transferSagaService;
 
     @Override
     public AccountResponse createAccount(Long userId, CreateAccountRequest request) {
@@ -87,44 +82,7 @@ public class BankingServiceImpl implements BankingService {
 
     @Override
     public void transfer(Long userId, TransferRequest request) {
-        Account fromAccount = accountRepository.findByIdAndUserId(request.fromAccountId(), userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ACCOUNT_NOT_FOUND));
-
-        Account toAccount = accountRepository.findByAccountNumber(request.toAccountNumber())
-                .orElseThrow(() -> new CustomException(ErrorCode.ACCOUNT_NOT_FOUND));
-
-        fromAccount.withdraw(request.amount());
-        toAccount.deposit(request.amount());
-
-        String desc = request.description() != null ? request.description() : "송금";
-
-        transactionRepository.save(Transaction.builder()
-                .account(fromAccount)
-                .transactionType(TransactionType.TRANSFER_OUT)
-                .amount(request.amount())
-                .balanceAfter(fromAccount.getBalance())
-                .description(desc)
-                .counterpartAccountNumber(toAccount.getAccountNumber())
-                .build());
-
-        transactionRepository.save(Transaction.builder()
-                .account(toAccount)
-                .transactionType(TransactionType.TRANSFER_IN)
-                .amount(request.amount())
-                .balanceAfter(toAccount.getBalance())
-                .description(desc)
-                .counterpartAccountNumber(fromAccount.getAccountNumber())
-                .build());
-
-        kafkaTemplate.send(TRANSFER_TOPIC, new TransferCompletedEvent(
-                userId,
-                fromAccount.getId(),
-                fromAccount.getAccountNumber(),
-                toAccount.getId(),
-                toAccount.getAccountNumber(),
-                request.amount(),
-                LocalDateTime.now()
-        ));
+        transferSagaService.executeTransfer(userId, request);
     }
 
     @Override

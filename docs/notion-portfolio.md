@@ -245,6 +245,49 @@ sqlalchemy.exc.OperationalError: could not connect to server
 
 ---
 
+### 도전 4. minikube 반복 다운 (ELK 스택 메모리 초과)
+
+**문제**
+Kibana + Logstash + 각 서비스별 Filebeat 사이드카를 추가하자, `helm upgrade` 도중 minikube API 서버가 응답 불능이 되면서 배포 실패.
+
+```
+Error: UPGRADE FAILED: TLS handshake timeout
+$ kubectl get nodes
+The connection to the server localhost:8080 was refused
+```
+
+**원인 분석**
+minikube 기본 메모리(2048Mi)를 훨씬 초과하는 리소스를 요청함.
+
+| 컴포넌트 | 메모리 요청 |
+| --- | --- |
+| Java 서비스 9개 × 256Mi | ~2,304Mi |
+| Kibana | 1,024Mi |
+| Logstash | 512Mi |
+| Filebeat 사이드카 9개 × 64Mi | ~576Mi |
+| **합계** | **~4,416Mi** |
+
+단일 노드 클러스터에서 Pod 스케줄링이 불가능해지자 Node Pressure가 발생, kubelet이 멈추고 API 서버 응답이 끊겼음.
+
+**해결**
+1. ELK 스택(Kibana, Logstash, Filebeat 사이드카) 전체 철회
+2. Prometheus + Grafana로 모니터링 일원화 — 동일 기능을 수분의 1 리소스로 제공
+3. `minikube stop && minikube start` 후 재배포 성공
+
+```bash
+# ELK 관련 파일 삭제
+rm helm/finhub/templates/kibana.yaml
+rm helm/finhub/templates/logstash.yaml
+rm helm/finhub/templates/filebeat-config.yaml
+# 각 서비스 yaml에서 filebeat 사이드카 컨테이너 블록 제거
+
+helm upgrade finhub ./helm/finhub  # 정상 완료
+```
+
+**배운 점**: 단일 노드 로컬 클러스터에서 ELK 풀스택 운영은 현실적으로 불가능함. 모니터링 도구 선택 시 실제 배포 환경의 리소스 제약을 반드시 고려해야 한다. 개발/로컬 환경에는 Prometheus + Grafana, 프로덕션에는 별도 로그 클러스터(ELK)를 분리하는 것이 올바른 접근법.
+
+---
+
 ## 🏗️ 아키텍처 다이어그램
 
 ```
