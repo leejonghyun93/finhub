@@ -3,7 +3,6 @@ package com.finhub.user.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -19,10 +18,11 @@ class JwtTokenProviderTest {
 
     @BeforeEach
     void setUp() {
-        jwtTokenProvider = new JwtTokenProvider();
-        ReflectionTestUtils.setField(jwtTokenProvider, "secretKey", TEST_SECRET);
-        ReflectionTestUtils.setField(jwtTokenProvider, "accessTokenExpiration", ACCESS_TOKEN_EXPIRATION);
-        ReflectionTestUtils.setField(jwtTokenProvider, "refreshTokenExpiration", REFRESH_TOKEN_EXPIRATION);
+        jwtTokenProvider = new JwtTokenProvider(
+                TEST_SECRET,
+                ACCESS_TOKEN_EXPIRATION,
+                REFRESH_TOKEN_EXPIRATION
+        );
     }
 
     @Test
